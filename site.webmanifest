@@ -1,0 +1,12 @@
+{
+  "name": "100억 리빌드",
+  "short_name": "100억 리빌드",
+  "start_url": "./",
+  "display": "browser",
+  "background_color": "#F28A19",
+  "theme_color": "#F28A19",
+  "icons": [
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
