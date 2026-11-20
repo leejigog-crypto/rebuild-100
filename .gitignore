@@ -25,3 +25,6 @@ dist-ssr
 
 # 원본 캐릭터 이미지 (src/assets/character 로 복사해 사용)
 files_p/
+# 작업용 원본 이미지 폴더 (저장소에 올리지 않음)
+files (2)/
+house/
