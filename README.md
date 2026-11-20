@@ -23,7 +23,7 @@ npm run dev      # http://localhost:5173
 npm run build    # dist/ 생성
 ```
 
-Vite + React + TypeScript. `main` 브랜치에 푸시하면 GitHub Actions가 GitHub Pages로 배포합니다.
+Vite + React + TypeScript. `npm run deploy` 로 빌드해서 `gh-pages` 브랜치에 올리면 GitHub Pages에 반영됩니다.
 
 - 디자인 토큰: `src/styles/tokens.css`
 - 공통 컴포넌트: `src/components/`
