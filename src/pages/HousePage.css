@@ -1,0 +1,132 @@
+.house-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  align-items: flex-start;
+}
+.house-view__photo-card {
+  flex: 3 1 520px;
+  min-width: 0;
+  padding: 12px;
+  border: 4px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-xl);
+  transform: rotate(-1deg);
+}
+.house-view__photo {
+  position: relative;
+  height: 460px;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+}
+.house-view__mine {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  background: var(--yellow);
+  font-weight: 900;
+  font-size: 14px;
+}
+.house-view__side {
+  flex: 2 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.house-view__grade-row {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.house-view__grade {
+  width: 96px;
+  height: 96px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--yellow);
+  box-shadow: 6px 6px 0 var(--ink);
+  font-family: var(--font-latin);
+  font-size: 64px;
+  line-height: 1;
+  transform: rotate(-4deg);
+}
+.house-view__grade-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.house-view__total {
+  font-family: var(--font-latin);
+  font-weight: 400;
+  font-size: 46px;
+  line-height: 1;
+  color: var(--royal);
+}
+.house-view__total span {
+  font-size: 18px;
+  color: var(--ink);
+}
+.house-view__title {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  background: var(--sky);
+  font-weight: 900;
+  font-size: 14px;
+}
+.house-view__scores {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.house-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* score bars (same look as the result screen) */
+.house-view .score-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+}
+.house-view .score-row__label {
+  font-weight: 900;
+  font-size: 14px;
+}
+.house-view .score-row__track {
+  height: 16px;
+  border: var(--border-thin);
+  border-radius: 999px;
+  background: #f4f4f4;
+  overflow: hidden;
+}
+.house-view .score-row__fill {
+  height: 100%;
+}
+.house-view .score-row__value {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .house-view__photo {
+    height: 260px;
+  }
+}

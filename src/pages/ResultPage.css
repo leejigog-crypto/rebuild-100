@@ -200,6 +200,15 @@
   font-weight: 400;
   font-size: 28px;
 }
+.result__save-note {
+  min-height: 1.4em;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.btn.is-published {
+  background: var(--sky);
+}
 .result__home-link {
   display: inline-flex;
   align-items: center;
@@ -301,91 +310,6 @@
   .result-fail__desc {
     font-size: 15px;
   }
-}
-
-/* ---------- share dialog ---------- */
-.share-dialog__head {
-  padding: 20px 22px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.share-dialog__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 32px;
-}
-.share-dialog__body {
-  padding: 16px 22px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.share-card {
-  display: flex;
-  align-items: stretch;
-  overflow: hidden;
-  border-radius: var(--radius);
-  border: var(--border);
-}
-.share-card__photo {
-  width: 130px;
-  flex: 0 0 auto;
-}
-.share-card__text {
-  flex: 1 1 auto;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--orange);
-}
-.share-card__text strong {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 22px;
-}
-.share-card__score {
-  font-size: 14px;
-  font-weight: 700;
-}
-.share-card__pitch {
-  font-size: 13px;
-  font-weight: 900;
-}
-.share-dialog__link {
-  display: flex;
-  gap: 8px;
-}
-.share-dialog__link input {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 48px;
-  padding: 0 12px;
-  border-radius: var(--radius-sm);
-  border: var(--border);
-  font: 500 14px var(--font-body);
-  color: var(--ink);
-}
-.share-dialog__link button,
-.share-dialog__channels button {
-  min-height: 48px;
-  border-radius: var(--radius-sm);
-  border: var(--border);
-  background: var(--white);
-  font: 900 14px var(--font-body);
-  color: var(--ink);
-  cursor: pointer;
-}
-.share-dialog__link button {
-  padding: 0 16px;
-  background: var(--yellow);
-}
-.share-dialog__channels {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
 }
 
 @media (max-width: 720px) {

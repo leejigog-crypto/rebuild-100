@@ -6,15 +6,22 @@ import { SiteMenu } from '../components/SiteMenu'
 import { heroSlides, levelSteps, popularHouses, regionRows } from '../data/game'
 import { loadHouseName } from '../data/progress'
 import { photoStyle } from '../data/images'
+import { HouseCard } from '../components/HouseCard'
+import { useHouses } from '../hooks/useHouses'
+import { listPublicHouses } from '../lib/api'
 import './MainPage.css'
 
 const tickerWords = Array.from({ length: 8 }, () => "LET'S BUILD")
+const loadPopular = () => listPublicHouses('likes', 4)
 
 export function MainPage() {
   // TODO(기능): 슬라이드 전환. 지금은 첫 장면(호숫가)만 보여 줍니다.
   const slideIndex = 0
   const slide = heroSlides[slideIndex]
   const [houseName] = useState(loadHouseName)
+  const popular = useHouses(loadPopular)
+  // 공개된 집이 하나도 없거나 서버가 꺼져 있으면 디자인의 예시 집을 보여 줍니다.
+  const showSamples = !popular.loading && popular.houses.length === 0
 
   return (
     <div className="main-page">
@@ -131,15 +138,25 @@ export function MainPage() {
           <div className="gallery__head">
             <div>
               <h2 className="stroke-title gallery__title">지금 인기 있는 집</h2>
-              <p className="gallery__lead">다른 사람들은 100억으로 어떤 집을 지었을까요?</p>
+              <p className="gallery__lead">
+                {showSamples ? '아직 공개된 집이 없어서 예시를 보여 드려요. 첫 주인공이 되어 보세요!' : '다른 사람들은 100억으로 어떤 집을 지었을까요?'}
+              </p>
             </div>
-            <a href="#gallery" className="btn btn--accent btn--sm">
+            <Link to="/gallery" className="btn btn--accent btn--sm">
               갤러리 더보기 <DoubleChevron color="#2B2A27" width={22} height={16} />
-            </a>
+            </Link>
           </div>
+          {!showSamples && (
+            <div className="gallery__grid">
+              {popular.houses.map((h) => (
+                <HouseCard key={h.id} house={h} liked={popular.liked.has(h.id)} onToggleLike={popular.toggleLike} />
+              ))}
+            </div>
+          )}
+          {showSamples && (
           <div className="gallery__grid">
             {popularHouses.map((h) => (
-              <a key={h.name} href="#gallery" className="house-card">
+              <Link key={h.name} to="/gallery" className="house-card">
                 <div role="img" aria-label={h.alt} className="house-card__photo photo" style={photoStyle(h.photo)} />
                 <div className="house-card__body">
                   <div className="house-card__top">
@@ -149,12 +166,13 @@ export function MainPage() {
                     </span>
                   </div>
                   <span className="house-card__meta">
-                    {h.region} · {h.maker} · 좋아요 {h.likes}
+                    {h.region} · {h.maker} · 예시
                   </span>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -172,9 +190,9 @@ export function MainPage() {
         <div className="site-footer__bottom container">
           <nav aria-label="하단 메뉴" className="site-footer__nav">
             <a href="#steps">게임 소개</a>
-            <a href="#gallery">갤러리</a>
-            <a href="#gallery">랭킹</a>
-            <a href="#gallery">내 집</a>
+            <Link to="/gallery">갤러리</Link>
+            <Link to="/gallery?tab=rank">랭킹</Link>
+            <Link to="/my">내 집</Link>
           </nav>
           <span className="site-footer__legal">100억 리빌드 · 재건 시뮬레이션 웹 게임 · 이용약관 · 개인정보처리방침</span>
         </div>

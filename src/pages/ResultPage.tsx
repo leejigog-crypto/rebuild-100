@@ -1,20 +1,43 @@
-import { useEffect, useState } from 'react'
-import { CharacterCue, type Mood } from '../components/CharacterCue'
-import { useCharacterCue } from '../hooks/useCharacterCue'
-import { randomHousePhoto } from '../data/houses'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BudgetHud } from '../components/BudgetHud'
-import { Dialog } from '../components/Dialog'
+import { CharacterCue, type Mood } from '../components/CharacterCue'
 import { GameScreen } from '../components/GameScreen'
-import { DoubleChevron, SmallCloseIcon } from '../components/Icons'
+import { DoubleChevron } from '../components/Icons'
+import { ShareDialog } from '../components/ShareDialog'
 import { ArrowLink, StageBar } from '../components/StageBar'
+import { toast } from '../lib/toast'
 import { formatTenth } from '../data/buildEvents'
 import { loadBuildResult } from '../data/buildResult'
 import { gradeColors } from '../data/game'
-import { loadHouseName, loadSpec } from '../data/progress'
+import { housePhotoUrl, randomHousePhotoKey } from '../data/houses'
+import { loadHouseName, loadProfile, loadSpec } from '../data/progress'
 import { computeResult } from '../data/scoring'
+import { useCharacterCue } from '../hooks/useCharacterCue'
 import { usePreviewDialog } from '../hooks/usePreviewDialog'
+import { saveHouse, setHousePublic } from '../lib/api'
+import { isServerEnabled } from '../lib/supabase'
 import './ResultPage.css'
+
+/** 같은 시공 회차는 다시 들어와도 같은 사진을 보여 줍니다. */
+function stablePhotoKey(runId: string | undefined, grade: string): string {
+  const key = runId ? `rebuild.photo.${runId}` : null
+  try {
+    const saved = key && window.sessionStorage.getItem(key)
+    if (saved && saved[0].toUpperCase() === grade) return saved
+  } catch {
+    /* ignore */
+  }
+  const picked = randomHousePhotoKey(grade)
+  try {
+    if (key) window.sessionStorage.setItem(key, picked)
+  } catch {
+    /* ignore */
+  }
+  return picked
+}
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 /** 등급별 캐릭터 표정과 대사 */
 const gradeReactions: Record<string, [Mood, string]> = {
@@ -27,14 +50,63 @@ const gradeReactions: Record<string, [Mood, string]> = {
 export function ResultPage() {
   const dialog = usePreviewDialog<'share'>()
   // 견적 선택 + 시공 결과(없으면 견적의 남은 예산)로 점수를 냅니다.
-  const [result] = useState(() => computeResult(loadSpec(), loadBuildResult()))
+  const [build] = useState(loadBuildResult)
+  const [result] = useState(() => computeResult(loadSpec(), build))
   const [defaultHouseName] = useState(loadHouseName)
   const { failed, remainTenth } = result
   const remainLabel = `${formatTenth(remainTenth)}억`
   const spentLabel = `${formatTenth(result.spentTenth)}억`
-  // 등급에 맞는 집 사진을 한 번만 무작위로 고릅니다.
-  const [housePhoto] = useState(() => randomHousePhoto(result.grade))
-  const housePhotoStyle = { backgroundImage: `url(${housePhoto})` }
+  // 등급에 맞는 집 사진 (같은 회차는 같은 사진)
+  const [photoKey] = useState(() => stablePhotoKey(build?.id, result.grade))
+  const housePhotoStyle = { backgroundImage: `url(${housePhotoUrl(photoKey)})` }
+
+  // 시공을 마치고 들어온 경우에만 완공한 집을 서버에 저장합니다.
+  const canSave = isServerEnabled && !failed && build !== null
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [isPublic, setIsPublic] = useState(false)
+  const savingRef = useRef<Promise<boolean> | null>(null)
+
+  useEffect(() => {
+    if (!canSave || !build || savingRef.current) return
+    setSaveState('saving')
+    const spec = loadSpec()
+    savingRef.current = saveHouse({
+      id: build.id,
+      player_name: loadProfile().player.trim().slice(0, 12),
+      house_name: defaultHouseName.slice(0, 16),
+      spec,
+      site_name: result.siteName,
+      look_name: result.lookName,
+      grade: result.grade as 'S' | 'A' | 'B' | 'C',
+      total: result.total,
+      title: result.title,
+      scores: result.scores,
+      remaining_tenth: result.remainTenth,
+      photo: photoKey,
+    })
+    savingRef.current.then((ok) => setSaveState(ok ? 'saved' : 'error'))
+  }, [canSave, build, defaultHouseName, result, photoKey])
+
+  const publish = async (next: boolean): Promise<boolean> => {
+    if (!build || !(await savingRef.current)) {
+      toast('아직 서버에 저장되지 않았어요.', 'error')
+      return false
+    }
+    const ok = await setHousePublic(build.id, next)
+    if (ok) setIsPublic(next)
+    toast(ok ? (next ? '갤러리에 공개했어요!' : '갤러리에서 내렸어요.') : '바꾸지 못했어요. 잠시 뒤 다시 해 주세요.', ok ? 'ok' : 'error')
+    return ok
+  }
+
+  const openShare = async () => {
+    if (!canSave) {
+      toast('시공을 마친 집만 공유할 수 있어요.', 'error')
+      return
+    }
+    // 공유 링크는 공개된 집만 열리므로 먼저 공개합니다.
+    if (!isPublic && !(await publish(true))) return
+    dialog.open('share')
+  }
 
   const character = useCharacterCue()
   const { showLater } = character
@@ -87,7 +159,7 @@ export function ResultPage() {
         </section>
 
         <StageBar level={5} current={4}>
-          <Link to="/" className="result__home-link">
+          <Link to="/my" className="result__home-link">
             내 집 목록
           </Link>
           <ArrowLink to="/intro">새 집 짓기</ArrowLink>
@@ -106,43 +178,18 @@ export function ResultPage() {
       shade="linear-gradient(180deg, rgba(43,42,39,0.30) 0%, rgba(43,42,39,0.0) 30%, rgba(43,42,39,0.30) 58%, rgba(43,42,39,0.88) 100%)"
       hud={<BudgetHud houseName={defaultHouseName} remaining={remainLabel} fillPercent={remainTenth / 10} />}
       dialog={
-        dialog.current === 'share' && (
-          <Dialog titleId="shareTitle" maxWidth={480} offsetTop={220} onClose={dialog.close}>
-            <div className="share-dialog__head">
-              <h2 id="shareTitle" className="share-dialog__title">
-                자랑하기
-              </h2>
-              <button type="button" className="dialog__close" aria-label="닫기" onClick={dialog.close}>
-                <SmallCloseIcon />
-              </button>
-            </div>
-            <div className="share-dialog__body">
-              <div className="share-card">
-                <div className="share-card__photo photo" aria-hidden="true" style={housePhotoStyle} />
-                <div className="share-card__text">
-                  <strong>
-                    {defaultHouseName} · {result.grade}등급
-                  </strong>
-                  <span className="share-card__score">
-                    종합 {result.total}점 · {result.title}
-                  </span>
-                  <span className="share-card__pitch">100억으로 지은 내 집, 너도 지어 볼래?</span>
-                </div>
-              </div>
-              <div className="share-dialog__link">
-                <label htmlFor="shareLink" className="sr-only">
-                  공유 링크
-                </label>
-                <input id="shareLink" type="text" readOnly value="100rebuild.example/h/[공유 링크]" />
-                <button type="button">링크 복사</button>
-              </div>
-              <div className="share-dialog__channels">
-                <button type="button">카카오톡</button>
-                <button type="button">인스타그램</button>
-                <button type="button">X</button>
-              </div>
-            </div>
-          </Dialog>
+        dialog.current === 'share' &&
+        build &&
+        isPublic && (
+          <ShareDialog
+            houseId={build.id}
+            houseName={defaultHouseName}
+            grade={result.grade}
+            total={result.total}
+            title={result.title}
+            photo={photoKey}
+            onClose={dialog.close}
+          />
         )
       }
     >
@@ -208,18 +255,36 @@ export function ResultPage() {
               <strong>{remainLabel}</strong>
             </div>
           </div>
-          {/* TODO(기능): 갤러리 공개 */}
-          <button type="button" className="btn btn--accent">
-            갤러리에 공개
+          <button
+            type="button"
+            className={`btn btn--accent${isPublic ? ' is-published' : ''}`}
+            aria-pressed={isPublic}
+            disabled={!canSave || saveState !== 'saved'}
+            onClick={() => publish(!isPublic)}
+          >
+            {isPublic ? '공개 중 · 내리기' : '갤러리에 공개'}
           </button>
-          <button type="button" className="btn btn--primary" onClick={() => dialog.open('share')}>
+          <button type="button" className="btn btn--primary" disabled={!canSave || saveState !== 'saved'} onClick={openShare}>
             공유하기 <DoubleChevron />
           </button>
+          <span className="result__save-note" role="status">
+            {!isServerEnabled
+              ? '서버 연결 준비 중이라 이 브라우저에만 남아요.'
+              : !build
+                ? '시공을 마치고 오면 내 집에 저장돼요.'
+                : saveState === 'saving'
+                  ? '내 집에 저장하는 중…'
+                  : saveState === 'saved'
+                    ? '내 집에 저장했어요 ✓'
+                    : saveState === 'error'
+                      ? '저장하지 못했어요. 새로고침해 다시 시도해 주세요.'
+                      : ''}
+          </span>
         </section>
       </div>
 
       <StageBar level={5} current={4} complete>
-        <Link to="/" className="result__home-link">
+        <Link to="/my" className="result__home-link">
           내 집 목록
         </Link>
         <ArrowLink to="/intro">새 집 짓기</ArrowLink>

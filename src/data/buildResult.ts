@@ -4,6 +4,8 @@ import type { StatName } from './buildEvents'
 const KEY = 'rebuild.buildResult'
 
 export type BuildResult = {
+  /** 시공 회차 id — 완공한 집을 서버에 한 번만 저장하는 데 씁니다 */
+  id: string
   /** 준공 시점 남은 예산 (0.1억 단위, 음수면 초과) */
   remaining: number
   /** 돌발 상황 선택으로 누적된 점수 변화 */
@@ -39,6 +41,7 @@ export function loadBuildResult(): BuildResult | null {
     const p = JSON.parse(raw) as Partial<BuildResult>
     if (typeof p.remaining !== 'number') return null
     return {
+      id: typeof p.id === 'string' ? p.id : crypto.randomUUID(),
       remaining: p.remaining,
       stats: { ...emptyStats, ...p.stats },
       extraDays: p.extraDays ?? 0,

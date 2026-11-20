@@ -43,6 +43,8 @@ type State = {
   stats: Record<StatName, number>
   /** 돌발 상황으로 늘어난 기간(일) */
   extraDays: number
+  /** 시공 회차 id (다시 시작하면 새로 발급) */
+  runId: string
   /** 지금 등장한 캐릭터 반응 */
   cue: Cue | null
   cueId: number
@@ -76,6 +78,7 @@ function init(): State {
   // 견적에서 남긴 예산이 시공 예산이 됩니다.
   const { remain } = resolveSpec(loadSpec())
   return {
+    runId: crypto.randomUUID(),
     stats: { ...emptyStats },
     extraDays: 0,
     progress: 0,
@@ -173,9 +176,9 @@ export function BuildPage() {
 
   useEffect(() => {
     // 진행 중(또는 다시 시작)이면 지난 판 결과를 지우고, 준공되면 결과를 남깁니다.
-    if (done) saveBuildResult({ remaining: s.budget, stats: s.stats, extraDays: s.extraDays, fast: s.fast })
+    if (done) saveBuildResult({ id: s.runId, remaining: s.budget, stats: s.stats, extraDays: s.extraDays, fast: s.fast })
     else clearBuildResult()
-  }, [done, s.budget, s.stats, s.extraDays, s.fast])
+  }, [done, s.runId, s.budget, s.stats, s.extraDays, s.fast])
   const [houseName] = useState(loadHouseName)
   const idx = Math.min(4, Math.floor(s.progress / 20))
   const within = done ? 100 : Math.round((s.progress - idx * 20) * 5)

@@ -2,10 +2,13 @@
  * 한 판의 진행 상태: 인트로의 이름 → 부지 → 견적 선택.
  * 브라우저(localStorage)에 남아 새로고침·재방문 후에도 이어집니다.
  */
+import { fetchSave, pushSave } from '../lib/api'
 import { catalog, defaultHouseName, defaultSpec, sites, specOrder, type SiteId, type SpecKey, type SpecOption } from './game'
 
 const SPEC_KEY = 'rebuild.spec'
 const PROFILE_KEY = 'rebuild.profile'
+/** 마지막으로 이 브라우저에서 진행을 바꾼 시각 (서버 저장본과 비교용) */
+const UPDATED_KEY = 'rebuild.updatedAt'
 
 export type Spec = Record<SpecKey, string>
 export type Profile = { player: string; house: string }
@@ -27,6 +30,42 @@ function write(key: string, value: unknown) {
   }
 }
 
+/** 진행이 바뀌면 시각을 남기고, 잠시 뒤 서버에도 저장합니다. */
+function touch() {
+  write(UPDATED_KEY, new Date().toISOString())
+  scheduleServerSave()
+}
+
+/* ---------- 서버 동기화 ---------- */
+let saveTimer: number | undefined
+
+function scheduleServerSave() {
+  window.clearTimeout(saveTimer)
+  saveTimer = window.setTimeout(() => void saveProgressNow(), 1500)
+}
+
+/** 지금 진행을 서버에 저장합니다. 메뉴의 "저장하기"가 호출합니다. */
+export function saveProgressNow(): Promise<boolean> {
+  window.clearTimeout(saveTimer)
+  const { player, house } = loadProfile()
+  return pushSave({ player_name: player, house_name: house, spec: loadSpec() })
+}
+
+/**
+ * 시작할 때 서버 저장본이 이 브라우저 것보다 새로우면 가져옵니다.
+ * (같은 브라우저의 익명 계정이므로 보통은 이미 같지만, 브라우저 저장소만 지워진 경우 복구됩니다.)
+ */
+export async function restoreProgressFromServer(): Promise<boolean> {
+  const save = await fetchSave()
+  if (!save) return false
+  const localAt = read<string>(UPDATED_KEY)
+  if (localAt && localAt >= save.updated_at) return false
+  write(PROFILE_KEY, { player: save.player_name, house: save.house_name })
+  write(SPEC_KEY, { ...defaultSpec, ...save.spec })
+  write(UPDATED_KEY, save.updated_at)
+  return true
+}
+
 /* ---------- 이름 ---------- */
 export function loadProfile(): Profile {
   const p = read<Partial<Profile>>(PROFILE_KEY)
@@ -35,6 +74,7 @@ export function loadProfile(): Profile {
 
 export function saveProfile(profile: Profile) {
   write(PROFILE_KEY, profile)
+  touch()
 }
 
 /** HUD·결과에 쓰는 집 이름. 입력 전이면 디자인 기본값. */
@@ -55,6 +95,7 @@ export function loadSpec(): Spec {
 
 export function saveSpec(spec: Spec) {
   write(SPEC_KEY, spec)
+  touch()
 }
 
 export function loadSite(): SiteId {
