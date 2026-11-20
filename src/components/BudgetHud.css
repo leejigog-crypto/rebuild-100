@@ -1,0 +1,56 @@
+.budget-hud {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(460px, calc(100% - 340px));
+  min-width: 240px;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.72);
+}
+.budget-hud__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.budget-hud__label {
+  font-weight: 900;
+  font-size: 13px;
+}
+.budget-hud__value {
+  font-size: 13px;
+  font-weight: 700;
+}
+.budget-hud__value strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--royal);
+}
+.budget-hud__track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--white);
+  border: var(--border-thin);
+  overflow: hidden;
+}
+.budget-hud__fill {
+  height: 100%;
+}
+
+/* On phones the HUD drops below the logo / menu row instead of squeezing between them. */
+@media (max-width: 720px) {
+  .budget-hud {
+    top: 100px;
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
+    min-width: 0;
+    transform: none;
+  }
+}

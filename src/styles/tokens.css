@@ -1,0 +1,55 @@
+/* 100억 리빌드 — design tokens (from the "100억 리빌드 UI 디자인" canvas) */
+:root {
+  /* color */
+  --ink: #2b2a27;
+  --ink-soft: #4a4740;
+  --white: #ffffff;
+  --paper: #e8e4dc;
+  --paper-deep: #d6d3cc;
+  --orange: #f28a19;
+  --sky: #00a7e2;
+  --blue: #0089c2;
+  --royal: #1032cf;
+  --yellow: #ffd23f;
+  --coral: #ff6a5e;
+  --lime: #9bd35a;
+  --red: #d7261e;
+  --red-hot: #ff4b3e;
+  --green: #1f7a1f;
+  --disabled-border: #8a857c;
+  --disabled-text: #5a564f;
+  --night: #0e0f14;
+
+  /* type */
+  --font-display: 'Black Han Sans', sans-serif;
+  --font-latin: 'Erica One', sans-serif;
+  --font-round: 'Jua', sans-serif;
+  --font-body: 'Noto Sans KR', sans-serif;
+
+  /* shape */
+  --radius-sm: 2px;
+  --radius: 4px;
+  --border: 3px solid var(--ink);
+  --border-thin: 2px solid var(--ink);
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow: 4px 4px 0 var(--ink);
+  --shadow-md: 5px 5px 0 var(--ink);
+  --shadow-lg: 6px 6px 0 var(--ink);
+  --shadow-xl: 10px 10px 0 var(--ink);
+
+  /* layout */
+  --container: 1200px;
+  --gutter: 32px;
+
+  /* patterns */
+  --stripe-progress: repeating-linear-gradient(-45deg, var(--orange) 0 8px, var(--yellow) 8px 16px);
+  --stripe-hazard: repeating-linear-gradient(-45deg, var(--yellow) 0 12px, var(--ink) 12px 24px);
+  --stripe-warning: repeating-linear-gradient(-45deg, var(--orange) 0 12px, var(--ink) 12px 24px);
+  --stripe-danger: repeating-linear-gradient(-45deg, var(--red-hot) 0 8px, var(--ink) 8px 16px);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --gutter: 16px;
+  }
+}

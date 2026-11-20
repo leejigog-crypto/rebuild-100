@@ -1,0 +1,48 @@
+.game-screen {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--ink);
+}
+.game-screen__photo {
+  position: absolute;
+  inset: -20px;
+}
+.game-screen__photo.is-kenburns {
+  animation: kenburns 14s ease-out both;
+}
+.game-screen__photo.is-wake {
+  animation: wake 4.5s ease-in-out 0.3s both, kenburns 14s ease-out both;
+}
+.game-screen__shade {
+  position: absolute;
+  inset: 0;
+}
+.game-screen__body {
+  position: relative;
+  z-index: 2;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 170px;
+  padding-bottom: 28px;
+}
+.game-screen__body.is-end {
+  justify-content: flex-end;
+}
+.game-screen__body.is-start {
+  justify-content: flex-start;
+  padding-top: 150px;
+}
+
+@media (max-width: 720px) {
+  .game-screen__body,
+  .game-screen__body.is-start {
+    padding-top: 190px;
+  }
+}
