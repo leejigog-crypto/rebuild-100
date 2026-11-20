@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { loadSite } from '../data/progress'
 import { BudgetHud } from '../components/BudgetHud'
 import { Dialog } from '../components/Dialog'
 import { GameScreen } from '../components/GameScreen'
@@ -18,7 +20,9 @@ export function EstimatePage() {
   const dialog = usePreviewDialog<DialogName>()
 
   // TODO(기능): 실제 선택값과 예산 계산. 지금은 디자인 기본 선택을 표시합니다.
-  const spec = params.get('state') === 'over' ? overBudgetSpec : defaultSpec
+  const baseSpec = params.get('state') === 'over' ? overBudgetSpec : defaultSpec
+  const [site] = useState(loadSite)
+  const spec = { ...baseSpec, site }
   const current = Object.fromEntries(
     specOrder.map((k) => [k, catalog[k].options.find((o) => o.id === spec[k]) ?? catalog[k].options[0]]),
   ) as Record<SpecKey, (typeof catalog)[SpecKey]['options'][number]>

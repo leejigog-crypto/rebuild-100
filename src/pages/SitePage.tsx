@@ -3,15 +3,21 @@ import { BudgetHud } from '../components/BudgetHud'
 import { GameScreen } from '../components/GameScreen'
 import { DoubleChevron } from '../components/Icons'
 import { ArrowLink, StageBar } from '../components/StageBar'
-import { defaultHouseName, defaultSpec, riskColors, sites } from '../data/game'
+import { useState } from 'react'
+import { defaultHouseName, riskColors, sites, type SiteId } from '../data/game'
+import { loadSite, saveSite } from '../data/progress'
 import { photoStyle } from '../data/images'
 import './SitePage.css'
 
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
 
 export function SitePage() {
-  // TODO(기능): 부지 선택 상태. 지금은 기본값(호숫가)이 선택된 모습입니다.
-  const selected = sites.find((s) => s.id === defaultSpec.site) ?? sites[0]
+  const [siteId, setSiteId] = useState<SiteId>(loadSite)
+  const selected = sites.find((s) => s.id === siteId) ?? sites[0]
+  const pick = (id: SiteId) => {
+    setSiteId(id)
+    saveSite(id)
+  }
   const afterPurchase = 100 - selected.cost
 
   return (
@@ -41,7 +47,13 @@ export function SitePage() {
           {sites.map((s) => {
             const isSelected = s.id === selected.id
             return (
-              <button key={s.id} type="button" aria-pressed={isSelected} className={`site-card${isSelected ? ' is-selected' : ''}`}>
+              <button
+                key={s.id}
+                type="button"
+                aria-pressed={isSelected}
+                className={`site-card${isSelected ? ' is-selected' : ''}`}
+                onClick={() => pick(s.id)}
+              >
                 <span className="site-card__photo photo" aria-hidden="true" style={photoStyle(s.photo)}>
                   <span className="site-card__name">{s.name}</span>
                   <span className="site-card__size">{s.size}</span>
