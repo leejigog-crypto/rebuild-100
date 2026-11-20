@@ -9,7 +9,7 @@ import { StageBar } from '../components/StageBar'
 import { describeChoice, formatTenth, scheduleEvents, statNames, type EventChoice, type ScheduledEvent, type StatName } from '../data/buildEvents'
 import { clearBuildResult, emptyStats, saveBuildResult } from '../data/buildResult'
 import { loadHouseName, loadSpec, resolveSpec } from '../data/progress'
-import { images } from '../data/images'
+import { SiteFeed } from '../components/SiteFeed'
 import './BuildPage.css'
 
 const phaseNames = ['기초', '골조', '외장', '내장', '준공']
@@ -271,7 +271,8 @@ export function BuildPage() {
 
       <div className="build__layout">
         <section aria-label="공사 현장" className="build__site card rise-3">
-          <img src={images.build} alt="철골 벽체 사이에 노란 단열재를 끼워 넣는 작업자와 쌓여 있는 석고보드" className="build__site-photo" />
+          {/* 공사가 실제로 진행 중일 때만 움직입니다 (일시정지·대기·돌발 상황·준공 후에는 멈춤) */}
+          <SiteFeed active={!done && !s.paused && s.stall === 0 && s.active < 0} />
           <div aria-hidden="true" className="build__site-shade" />
           <div aria-hidden="true" className="build__site-stripe" />
           <span className="build__live">

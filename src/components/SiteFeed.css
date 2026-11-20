@@ -1,0 +1,116 @@
+/* 공사 현장 실시간 화면 */
+.site-feed {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+/* ---------- 사진: 번갈아 보이며 천천히 패닝·줌 ---------- */
+@keyframes feed-pan-a {
+  from { transform: scale(1.08) translate(-2%, 1%); }
+  to { transform: scale(1.2) translate(2%, -2%); }
+}
+@keyframes feed-pan-b {
+  from { transform: scale(1.2) translate(2%, -1%); }
+  to { transform: scale(1.08) translate(-2%, 2%); }
+}
+.site-feed__rig {
+  position: absolute;
+  inset: 0;
+}
+.site-feed__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  animation: feed-pan-a 10s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.site-feed__img--1 {
+  animation-name: feed-pan-b;
+}
+.site-feed__img.is-on {
+  opacity: 1;
+}
+.site-feed.is-active .site-feed__img {
+  animation-play-state: running;
+}
+
+/* ---------- 드릴 진동: 3.4초마다 짧게 덜덜 ---------- */
+@keyframes feed-rumble {
+  0%, 14%, 100% { transform: translate(0, 0); }
+  2% { transform: translate(-2px, 1px) rotate(-0.2deg); }
+  4% { transform: translate(2px, -1px) rotate(0.2deg); }
+  6% { transform: translate(-2px, -1px); }
+  8% { transform: translate(2px, 1px) rotate(-0.15deg); }
+  10% { transform: translate(-1px, 1px); }
+  12% { transform: translate(1px, 0); }
+}
+.site-feed.is-active .site-feed__rig {
+  animation: feed-rumble 3.4s linear 1.2s infinite;
+}
+
+/* ---------- 사진이 바뀔 때 카메라 플래시처럼 번쩍 ---------- */
+@keyframes feed-flash {
+  0% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+.site-feed__flash {
+  position: absolute;
+  inset: 0;
+  background: #fff6d8;
+  opacity: 0;
+  pointer-events: none;
+  animation: feed-flash 0.5s ease-out both;
+}
+
+/* ---------- 먼지: 빛 속에서 천천히 떠오름 ---------- */
+@keyframes feed-dust {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.85; }
+  85% { opacity: 0.6; }
+  100% { transform: translate(var(--dx), -140px); opacity: 0; }
+}
+.site-feed__dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.site-feed__dust span {
+  --dx: calc((var(--i) - 7) * 6px);
+  position: absolute;
+  bottom: calc(8% + var(--i) * 3%);
+  left: calc(4% + var(--i) * 6.7%);
+  width: calc(3px + var(--i) * 0.25px);
+  height: calc(3px + var(--i) * 0.25px);
+  border-radius: 50%;
+  background: rgba(255, 244, 214, 0.9);
+  box-shadow: 0 0 6px rgba(255, 230, 170, 0.8);
+  opacity: 0;
+  animation: feed-dust calc(4s + var(--i) * 0.35s) linear calc(var(--i) * -0.7s) infinite;
+  animation-play-state: paused;
+}
+.site-feed.is-active .site-feed__dust span {
+  animation-play-state: running;
+}
+
+/* Reduced motion: keep the slow photo crossfade (a transition), drop pan, shake, flash and dust. */
+@media (prefers-reduced-motion: reduce) {
+  .site-feed__img,
+  .site-feed.is-active .site-feed__rig,
+  .site-feed__flash,
+  .site-feed__dust span {
+    animation: none !important;
+  }
+  .site-feed__img {
+    transform: scale(1.08);
+  }
+  .site-feed__dust {
+    display: none;
+  }
+}
