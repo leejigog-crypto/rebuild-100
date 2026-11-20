@@ -1,37 +1,33 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { loadSite } from '../data/progress'
+import { Link } from 'react-router-dom'
 import { BudgetHud } from '../components/BudgetHud'
 import { Dialog } from '../components/Dialog'
 import { GameScreen } from '../components/GameScreen'
 import { DoubleChevron, SmallCloseIcon } from '../components/Icons'
 import { ArrowLink, StageBar } from '../components/StageBar'
-import { catalog, defaultHouseName, defaultSpec, formatEok, gradeColors, specOrder, type SpecKey } from '../data/game'
+import { catalog, formatEok, gradeColors, specOrder, type SpecKey } from '../data/game'
+import { loadHouseName, loadSpec, resolveSpec, saveSpec, type Spec } from '../data/progress'
 import { usePreviewDialog } from '../hooks/usePreviewDialog'
 import './EstimatePage.css'
 
 type DialogName = `edit-${SpecKey}` | 'confirm'
 
-/** 예산 초과 화면을 확인하기 위한 예시 선택 (`?state=over`). */
-const overBudgetSpec: Record<SpecKey, string> = { ...defaultSpec, struct: 's4', look: 'l4' }
-
 export function EstimatePage() {
-  const [params] = useSearchParams()
   const dialog = usePreviewDialog<DialogName>()
+  const [spec, setSpec] = useState<Spec>(loadSpec)
+  const [houseName] = useState(loadHouseName)
 
-  // TODO(기능): 실제 선택값과 예산 계산. 지금은 디자인 기본 선택을 표시합니다.
-  const baseSpec = params.get('state') === 'over' ? overBudgetSpec : defaultSpec
-  const [site] = useState(loadSite)
-  const spec = { ...baseSpec, site }
-  const current = Object.fromEntries(
-    specOrder.map((k) => [k, catalog[k].options.find((o) => o.id === spec[k]) ?? catalog[k].options[0]]),
-  ) as Record<SpecKey, (typeof catalog)[SpecKey]['options'][number]>
-
-  const spent = specOrder.reduce((sum, k) => sum + current[k].cost, 0)
-  const remain = Math.round((100 - spent) * 10) / 10
+  const { options: current, spent, remain } = resolveSpec(spec)
   const over = remain < 0
 
   const editing = dialog.current?.startsWith('edit-') ? (dialog.current.slice(5) as SpecKey) : null
+
+  const choose = (key: SpecKey, id: string) => {
+    const next = { ...spec, [key]: id }
+    setSpec(next)
+    saveSpec(next)
+    dialog.close()
+  }
 
   return (
     <GameScreen
@@ -40,7 +36,7 @@ export function EstimatePage() {
       shade="linear-gradient(180deg, rgba(43,42,39,0.35) 0%, rgba(43,42,39,0.10) 30%, rgba(43,42,39,0.40) 60%, rgba(43,42,39,0.88) 100%)"
       hud={
         <BudgetHud
-          houseName={defaultHouseName}
+          houseName={houseName}
           remaining={formatEok(remain)}
           fillPercent={over ? 100 : remain}
           fill={over ? 'var(--stripe-danger)' : 'var(--orange)'}
@@ -70,7 +66,13 @@ export function EstimatePage() {
                     const diff = Math.round((o.cost - current[editing].cost) * 10) / 10
                     const g = gradeColors[o.grade]
                     return (
-                      <button key={o.id} type="button" aria-pressed={isCurrent} className={`option-card${isCurrent ? ' is-current' : ''}`}>
+                      <button
+                        key={o.id}
+                        type="button"
+                        aria-pressed={isCurrent}
+                        className={`option-card${isCurrent ? ' is-current' : ''}`}
+                        onClick={() => choose(editing, o.id)}
+                      >
                         <span className="option-card__top">
                           <span className="chip" style={{ background: g.bg, color: g.fg, fontSize: 13, padding: '2px 10px' }}>
                             {o.grade}

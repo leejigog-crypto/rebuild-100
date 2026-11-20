@@ -4,8 +4,8 @@ import { GameScreen } from '../components/GameScreen'
 import { DoubleChevron } from '../components/Icons'
 import { ArrowLink, StageBar } from '../components/StageBar'
 import { useState } from 'react'
-import { defaultHouseName, riskColors, sites, type SiteId } from '../data/game'
-import { loadSite, saveSite } from '../data/progress'
+import { riskColors, sites, type SiteId } from '../data/game'
+import { loadHouseName, loadSite, saveSite } from '../data/progress'
 import { photoStyle } from '../data/images'
 import './SitePage.css'
 
@@ -13,6 +13,7 @@ const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
 
 export function SitePage() {
   const [siteId, setSiteId] = useState<SiteId>(loadSite)
+  const [houseName] = useState(loadHouseName)
   const selected = sites.find((s) => s.id === siteId) ?? sites[0]
   const pick = (id: SiteId) => {
     setSiteId(id)
@@ -27,7 +28,7 @@ export function SitePage() {
       shade="linear-gradient(180deg, rgba(43,42,39,0.35) 0%, rgba(43,42,39,0.10) 30%, rgba(43,42,39,0.35) 60%, rgba(43,42,39,0.85) 100%)"
       hud={
         <BudgetHud
-          houseName={defaultHouseName}
+          houseName={houseName}
           remaining="100억"
           fillPercent={100}
           fill={`linear-gradient(90deg, var(--orange) 0 ${afterPurchase}%, var(--yellow) ${afterPurchase}% 100%)`}

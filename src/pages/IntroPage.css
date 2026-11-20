@@ -144,6 +144,11 @@
   color: var(--ink);
   outline-color: var(--sky);
 }
+.intro__hint {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
 .intro__story {
   display: flex;
   align-items: center;

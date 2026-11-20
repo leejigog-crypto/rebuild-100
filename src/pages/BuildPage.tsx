@@ -1,13 +1,13 @@
-import { useEffect, useReducer } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BudgetHud } from '../components/BudgetHud'
 import { Dialog } from '../components/Dialog'
 import { GameScreen } from '../components/GameScreen'
 import { DoubleChevron, PauseIcon, WarningIcon } from '../components/Icons'
 import { StageBar } from '../components/StageBar'
-import { describeChoice, formatTenth, scheduleEvents, type EventChoice, type ScheduledEvent } from '../data/buildEvents'
-import { clearBuildResult, saveBuildResult } from '../data/buildResult'
-import { defaultHouseName } from '../data/game'
+import { describeChoice, formatTenth, scheduleEvents, statNames, type EventChoice, type ScheduledEvent, type StatName } from '../data/buildEvents'
+import { clearBuildResult, emptyStats, saveBuildResult } from '../data/buildResult'
+import { loadHouseName, loadSpec, resolveSpec } from '../data/progress'
 import { images } from '../data/images'
 import './BuildPage.css'
 
@@ -19,8 +19,6 @@ const TICK_MS = 200
 const TOTAL_TICKS = 450
 /** 빠른 시공 비용 (0.1억 단위) */
 const FAST_COST = 15
-/** 견적 단계 기본 선택 후 남은 예산 6.5억. TODO: 견적 화면과 연결 */
-const START_BUDGET = 65
 const START_DAYS = 32
 
 type LogEntry = { key: number; title: string; choice: string; effect: string; tone: 'cost' | 'neutral' | 'good' }
@@ -40,14 +38,22 @@ type State = {
   active: number
   log: LogEntry[]
   logKey: number
+  /** 돌발 상황 선택으로 누적된 점수 변화 */
+  stats: Record<StatName, number>
+  /** 돌발 상황으로 늘어난 기간(일) */
+  extraDays: number
 }
 
 type Action = { type: 'tick' } | { type: 'choose'; choice: EventChoice } | { type: 'togglePause' } | { type: 'fast' } | { type: 'restart' }
 
 function init(): State {
+  // 견적에서 남긴 예산이 시공 예산이 됩니다.
+  const { remain } = resolveSpec(loadSpec())
   return {
+    stats: { ...emptyStats },
+    extraDays: 0,
     progress: 0,
-    budget: START_BUDGET,
+    budget: Math.round(remain * 10),
     totalDays: START_DAYS,
     fast: false,
     paused: false,
@@ -89,6 +95,8 @@ function reducer(s: State, a: Action): State {
         ...s,
         budget: s.budget - cost,
         totalDays: s.totalDays + days,
+        extraDays: s.extraDays + days,
+        stats: Object.fromEntries(statNames.map((n) => [n, s.stats[n] + (a.choice.stats?.[n] ?? 0)])) as Record<StatName, number>,
         stall: Math.min(40, days * 5),
         active: -1,
         next: s.next + 1,
@@ -128,9 +136,10 @@ export function BuildPage() {
 
   useEffect(() => {
     // 진행 중(또는 다시 시작)이면 지난 판 결과를 지우고, 준공되면 결과를 남깁니다.
-    if (done) saveBuildResult({ remaining: s.budget })
+    if (done) saveBuildResult({ remaining: s.budget, stats: s.stats, extraDays: s.extraDays, fast: s.fast })
     else clearBuildResult()
-  }, [done, s.budget])
+  }, [done, s.budget, s.stats, s.extraDays, s.fast])
+  const [houseName] = useState(loadHouseName)
   const idx = Math.min(4, Math.floor(s.progress / 20))
   const within = done ? 100 : Math.round((s.progress - idx * 20) * 5)
   const days = done ? 0 : Math.ceil(s.totalDays * (1 - s.progress / 100) * (s.fast ? 0.5 : 1))
@@ -146,7 +155,7 @@ export function BuildPage() {
       shade="linear-gradient(180deg, rgba(43,42,39,0.40) 0%, rgba(43,42,39,0.15) 30%, rgba(43,42,39,0.45) 60%, rgba(43,42,39,0.90) 100%)"
       hud={
         <BudgetHud
-          houseName={defaultHouseName}
+          houseName={houseName}
           remaining={budgetLabel}
           fillPercent={overBudget ? 100 : s.budget / 10}
           fill={overBudget ? 'var(--stripe-danger)' : 'var(--stripe-progress)'}

@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BigChevrons, DoubleChevron, PixelCloud } from '../components/Icons'
 import { Logo } from '../components/Logo'
 import { SiteMenu } from '../components/SiteMenu'
-import { defaultHouseName, heroSlides, levelSteps, popularHouses, regionRows } from '../data/game'
+import { heroSlides, levelSteps, popularHouses, regionRows } from '../data/game'
+import { loadHouseName } from '../data/progress'
 import { photoStyle } from '../data/images'
 import './MainPage.css'
 
@@ -12,6 +14,7 @@ export function MainPage() {
   // TODO(기능): 슬라이드 전환. 지금은 첫 장면(호숫가)만 보여 줍니다.
   const slideIndex = 0
   const slide = heroSlides[slideIndex]
+  const [houseName] = useState(loadHouseName)
 
   return (
     <div className="main-page">
@@ -36,7 +39,7 @@ export function MainPage() {
                 새 집 짓기 <DoubleChevron />
               </Link>
               <Link to="/site" className="hero__continue">
-                이어하기 · {defaultHouseName}
+                이어하기 · {houseName}
               </Link>
             </div>
           </div>

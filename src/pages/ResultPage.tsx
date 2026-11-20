@@ -7,51 +7,26 @@ import { DoubleChevron, SmallCloseIcon } from '../components/Icons'
 import { ArrowLink, StageBar } from '../components/StageBar'
 import { formatTenth } from '../data/buildEvents'
 import { loadBuildResult } from '../data/buildResult'
-import { defaultHouseName, gradeColors, type Grade } from '../data/game'
+import { gradeColors } from '../data/game'
 import { photoStyle } from '../data/images'
+import { loadHouseName, loadSpec } from '../data/progress'
+import { computeResult } from '../data/scoring'
 import { usePreviewDialog } from '../hooks/usePreviewDialog'
 import './ResultPage.css'
 
-/**
- * 디자인 기본 선택(호숫가 · 내진 1등급 · 방 9개 · 전원주택 · 옥상정원)으로 나온 결과.
- * TODO(기능): 재난 테스트와 점수 계산.
- */
-const result = {
-  siteName: '호숫가 220평',
-  lookName: '전원주택 스타일',
-  total: 85,
-  grade: 'A',
-  title: '내진 마스터',
-  photoAlt: '완공된 집: 전원주택 스타일, 철근콘크리트 · 내진 1등급',
-  specs: [
-    { label: '호숫가 220평', grade: '표준' },
-    { label: '철근콘크리트 · 내진 1등급', grade: '고급' },
-    { label: '방 9개', grade: '고급' },
-    { label: '전원주택 스타일', grade: '표준' },
-    { label: '옥상정원 · 홈시어터', grade: '표준' },
-  ] as { label: string; grade: Grade }[],
-  scores: [
-    { label: '디자인', value: 88 },
-    { label: '안전성', value: 96 },
-    { label: '예산 효율', value: 80 },
-    { label: '거주 만족도', value: 91 },
-    { label: '시공 속도', value: 69 },
-  ],
-}
-
 export function ResultPage() {
   const dialog = usePreviewDialog<'share'>()
-  // 시공 결과가 없으면(바로 들어온 경우) 견적 기본값 6.5억 남음으로 봅니다.
-  const [build] = useState(loadBuildResult)
-  const remainTenth = build?.remaining ?? 65
-  const failed = remainTenth < 0
+  // 견적 선택 + 시공 결과(없으면 견적의 남은 예산)로 점수를 냅니다.
+  const [result] = useState(() => computeResult(loadSpec(), loadBuildResult()))
+  const [defaultHouseName] = useState(loadHouseName)
+  const { failed, remainTenth } = result
   const remainLabel = `${formatTenth(remainTenth)}억`
-  const spentLabel = `${formatTenth(1000 - remainTenth)}억`
+  const spentLabel = `${formatTenth(result.spentTenth)}억`
 
   if (failed) {
     return (
       <GameScreen
-        photo="lake"
+        photo={result.sitePhoto}
         photoAlt={`배경: ${result.siteName} 부지 풍경`}
         align="start"
         shade="linear-gradient(180deg, rgba(60,8,6,0.55) 0%, rgba(43,42,39,0.55) 45%, rgba(43,42,39,0.92) 100%)"
@@ -97,7 +72,7 @@ export function ResultPage() {
 
   return (
     <GameScreen
-      photo="lake"
+      photo={result.sitePhoto}
       photoAlt={`배경: ${result.siteName} 부지 풍경`}
       photoEffect="wake"
       align="start"
@@ -116,7 +91,7 @@ export function ResultPage() {
             </div>
             <div className="share-dialog__body">
               <div className="share-card">
-                <div className="share-card__photo photo" aria-hidden="true" style={photoStyle('lake')} />
+                <div className="share-card__photo photo" aria-hidden="true" style={photoStyle(result.housePhoto)} />
                 <div className="share-card__text">
                   <strong>
                     {defaultHouseName} · {result.grade}등급
@@ -153,7 +128,7 @@ export function ResultPage() {
       </div>
 
       <section aria-label="완성된 집" className="result__house">
-        <div role="img" aria-label={result.photoAlt} className="result__photo photo" style={photoStyle('lake')}>
+        <div role="img" aria-label={result.photoAlt} className="result__photo photo" style={photoStyle(result.housePhoto)}>
           <span className="result__stamp">MY HOUSE</span>
         </div>
         <div className="result__house-foot">

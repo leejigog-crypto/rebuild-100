@@ -6,6 +6,7 @@
  */
 
 export type StatName = '안전성' | '디자인' | '만족도'
+export const statNames: StatName[] = ['안전성', '디자인', '만족도']
 
 export type EventChoice = {
   label: string
