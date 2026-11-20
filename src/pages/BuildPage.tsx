@@ -4,6 +4,7 @@ import { BudgetHud } from '../components/BudgetHud'
 import { Dialog } from '../components/Dialog'
 import { GameScreen } from '../components/GameScreen'
 import { DoubleChevron, PauseIcon, WarningIcon } from '../components/Icons'
+import { CharacterCue, type Cue, type Mood } from '../components/CharacterCue'
 import { StageBar } from '../components/StageBar'
 import { describeChoice, formatTenth, scheduleEvents, statNames, type EventChoice, type ScheduledEvent, type StatName } from '../data/buildEvents'
 import { clearBuildResult, emptyStats, saveBuildResult } from '../data/buildResult'
@@ -42,9 +43,34 @@ type State = {
   stats: Record<StatName, number>
   /** 돌발 상황으로 늘어난 기간(일) */
   extraDays: number
+  /** 지금 등장한 캐릭터 반응 */
+  cue: Cue | null
+  cueId: number
 }
 
-type Action = { type: 'tick' } | { type: 'choose'; choice: EventChoice } | { type: 'togglePause' } | { type: 'fast' } | { type: 'restart' }
+type Action =
+  | { type: 'tick' }
+  | { type: 'choose'; choice: EventChoice }
+  | { type: 'togglePause' }
+  | { type: 'fast' }
+  | { type: 'restart' }
+  | { type: 'cueDone' }
+
+function withCue(s: State, mood: Mood, line: string): Pick<State, 'cue' | 'cueId'> {
+  return { cue: { id: s.cueId, mood, line }, cueId: s.cueId + 1 }
+}
+
+/** 선택 결과에 맞는 표정과 대사 */
+function reactionFor(choice: EventChoice, budgetAfter: number): [Mood, string] {
+  const cost = choice.cost ?? 0
+  const stats = Object.values(choice.stats ?? {})
+  if (budgetAfter < 0) return ['sad', '예산이… 넘어 버렸어요.']
+  if (cost < 0 || stats.some((v) => v > 0)) return ['happy', '좋았어, 이득이다!']
+  if (stats.some((v) => v < 0)) return ['sad', '찜찜하지만 어쩔 수 없죠…']
+  if (choice.days) return ['sad', '공사가 좀 늦어지겠네요.']
+  if (cost > 0) return ['default', '돈으로 깔끔하게 해결!']
+  return ['default', '그냥 넘어가죠.']
+}
 
 function init(): State {
   // 견적에서 남긴 예산이 시공 예산이 됩니다.
@@ -63,6 +89,8 @@ function init(): State {
     active: -1,
     log: [],
     logKey: 0,
+    cue: { id: 0, mood: 'default', line: '착공! 잘 부탁해요.' },
+    cueId: 1,
   }
 }
 
@@ -79,10 +107,15 @@ function reducer(s: State, a: Action): State {
       const progress = Math.min(100, s.progress + step)
       const upcoming = s.schedule[s.next]
       if (upcoming && progress >= upcoming.at) {
-        return { ...s, progress: upcoming.at, active: s.next }
+        return { ...s, progress: upcoming.at, active: s.next, ...withCue(s, 'surprised', `헉, ${upcoming.event.title}`) }
       }
       if (progress >= 100) {
-        return { ...s, progress, ...addLog(s, { title: '준공 완료', choice: '재난 테스트를 시작할 수 있어요', effect: '✓', tone: 'good' }) }
+        return {
+          ...s,
+          progress,
+          ...addLog(s, { title: '준공 완료', choice: '재난 테스트를 시작할 수 있어요', effect: '✓', tone: 'good' }),
+          ...(s.budget < 0 ? withCue(s, 'sad', '다 지었는데… 예산이 넘었어요.') : withCue(s, 'happy', '준공 완료! 해냈다!')),
+        }
       }
       return { ...s, progress }
     }
@@ -106,8 +139,11 @@ function reducer(s: State, a: Action): State {
           effect: describeChoice(a.choice),
           tone: cost > 0 ? 'cost' : cost < 0 ? 'good' : 'neutral',
         }),
+        ...withCue(s, ...reactionFor(a.choice, s.budget - cost)),
       }
     }
+    case 'cueDone':
+      return { ...s, cue: null }
     case 'togglePause':
       return s.progress >= 100 ? s : { ...s, paused: !s.paused }
     case 'fast':
@@ -117,6 +153,7 @@ function reducer(s: State, a: Action): State {
         fast: true,
         budget: s.budget - FAST_COST,
         ...addLog(s, { title: '빠른 시공', choice: '남은 공사 2배 속도', effect: `−${formatTenth(FAST_COST)}억`, tone: 'cost' }),
+        ...withCue(s, 'happy', '속도 두 배! 가 보자고요!'),
       }
     case 'restart':
       return init()
@@ -323,6 +360,8 @@ export function BuildPage() {
           </button>
         )}
       </StageBar>
+
+      <CharacterCue cue={s.cue} onDone={() => dispatch({ type: 'cueDone' })} />
     </GameScreen>
   )
 }

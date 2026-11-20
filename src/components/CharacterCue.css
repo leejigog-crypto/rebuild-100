@@ -1,0 +1,107 @@
+/* 0.4s 등장 → 2s 머묾 → 0.4s 퇴장 (총 2.8s) */
+@keyframes cue-slide {
+  0% { transform: translateX(calc(100% + 48px)) rotate(4deg); }
+  14% { transform: translateX(0) rotate(-2deg); }
+  18% { transform: translateX(0) rotate(0deg); }
+  86% { transform: translateX(0) rotate(0deg); }
+  100% { transform: translateX(calc(100% + 48px)) rotate(4deg); }
+}
+@keyframes cue-fade {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 1; }
+}
+@keyframes cue-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.character-cue {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9; /* above dialogs */
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  animation: cue-slide 2.8s cubic-bezier(0.3, 1.2, 0.4, 1) both;
+}
+
+.character-cue__portrait {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 407 / 517;
+  object-fit: cover;
+  object-position: top;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+.character-cue.is-surprised .character-cue__portrait {
+  border-color: var(--red-hot);
+  box-shadow: 6px 6px 0 var(--ink), 0 0 0 4px var(--ink);
+  animation: cue-shake 0.12s linear 0.4s 4;
+}
+.character-cue.is-happy .character-cue__portrait {
+  box-shadow: 6px 6px 0 var(--orange), 0 0 0 0 transparent;
+}
+
+.character-cue__bubble {
+  position: relative;
+  margin: 0;
+  max-width: 220px;
+  padding: 10px 14px;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.3;
+  text-align: left;
+}
+.character-cue__bubble::after {
+  content: '';
+  position: absolute;
+  right: 36px;
+  bottom: -11px;
+  width: 16px;
+  height: 16px;
+  background: var(--white);
+  border-right: var(--border);
+  border-bottom: var(--border);
+  transform: rotate(45deg);
+}
+.character-cue.is-surprised .character-cue__bubble {
+  background: var(--yellow);
+}
+.character-cue.is-surprised .character-cue__bubble::after {
+  background: var(--yellow);
+}
+
+@media (max-width: 720px) {
+  .character-cue {
+    right: 12px;
+    bottom: 12px;
+    width: 120px;
+  }
+  .character-cue__bubble {
+    font-size: 14px;
+    max-width: 160px;
+  }
+}
+
+/* Reduced motion: no sliding or shaking, just a 2.8s fade so the cue still appears and leaves. */
+@media (prefers-reduced-motion: reduce) {
+  .character-cue.character-cue {
+    animation: cue-fade 2.8s linear both !important;
+  }
+  .character-cue.is-surprised .character-cue__portrait {
+    animation: none !important;
+  }
+}

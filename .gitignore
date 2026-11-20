@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 원본 캐릭터 이미지 (src/assets/character 로 복사해 사용)
+files_p/
