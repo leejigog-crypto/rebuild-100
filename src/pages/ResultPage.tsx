@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CharacterCue, type Mood } from '../components/CharacterCue'
+import { useCharacterCue } from '../hooks/useCharacterCue'
+import { randomHousePhoto } from '../data/houses'
 import { Link } from 'react-router-dom'
 import { BudgetHud } from '../components/BudgetHud'
 import { Dialog } from '../components/Dialog'
@@ -8,11 +11,18 @@ import { ArrowLink, StageBar } from '../components/StageBar'
 import { formatTenth } from '../data/buildEvents'
 import { loadBuildResult } from '../data/buildResult'
 import { gradeColors } from '../data/game'
-import { photoStyle } from '../data/images'
 import { loadHouseName, loadSpec } from '../data/progress'
 import { computeResult } from '../data/scoring'
 import { usePreviewDialog } from '../hooks/usePreviewDialog'
 import './ResultPage.css'
+
+/** 등급별 캐릭터 표정과 대사 */
+const gradeReactions: Record<string, [Mood, string]> = {
+  S: ['happy', 'S등급! 꿈의 집이 완성됐어요!'],
+  A: ['happy', 'A등급! 이 정도면 자랑할 만해요!'],
+  B: ['default', 'B등급. 나쁘지 않은 집이에요.'],
+  C: ['sad', 'C등급… 다음엔 더 튼튼하게 지어요.'],
+}
 
 export function ResultPage() {
   const dialog = usePreviewDialog<'share'>()
@@ -22,6 +32,22 @@ export function ResultPage() {
   const { failed, remainTenth } = result
   const remainLabel = `${formatTenth(remainTenth)}억`
   const spentLabel = `${formatTenth(result.spentTenth)}억`
+  // 등급에 맞는 집 사진을 한 번만 무작위로 고릅니다.
+  const [housePhoto] = useState(() => randomHousePhoto(result.grade))
+  const housePhotoStyle = { backgroundImage: `url(${housePhoto})` }
+
+  const character = useCharacterCue()
+  const { showLater } = character
+  useEffect(() => {
+    if (failed) {
+      // "준공 실패" 글자가 쾅 찍힌 직후
+      showLater(1100, 'sad', '예산을 넘기다니… 다시 해 봐요.')
+      return
+    }
+    // 등급 도장이 찍히는 2.6초 뒤에 등급별 반응
+    const [mood, line] = gradeReactions[result.grade] ?? gradeReactions.B
+    showLater(3200, mood, line)
+  }, [failed, result.grade, showLater])
 
   if (failed) {
     return (
@@ -66,6 +92,7 @@ export function ResultPage() {
           </Link>
           <ArrowLink to="/intro">새 집 짓기</ArrowLink>
         </StageBar>
+        <CharacterCue cue={character.cue} onDone={character.done} />
       </GameScreen>
     )
   }
@@ -91,7 +118,7 @@ export function ResultPage() {
             </div>
             <div className="share-dialog__body">
               <div className="share-card">
-                <div className="share-card__photo photo" aria-hidden="true" style={photoStyle(result.housePhoto)} />
+                <div className="share-card__photo photo" aria-hidden="true" style={housePhotoStyle} />
                 <div className="share-card__text">
                   <strong>
                     {defaultHouseName} · {result.grade}등급
@@ -128,7 +155,7 @@ export function ResultPage() {
       </div>
 
       <section aria-label="완성된 집" className="result__house">
-        <div role="img" aria-label={result.photoAlt} className="result__photo photo" style={photoStyle(result.housePhoto)}>
+        <div role="img" aria-label={result.photoAlt} className="result__photo photo" style={housePhotoStyle}>
           <span className="result__stamp">MY HOUSE</span>
         </div>
         <div className="result__house-foot">
@@ -197,6 +224,7 @@ export function ResultPage() {
         </Link>
         <ArrowLink to="/intro">새 집 짓기</ArrowLink>
       </StageBar>
+      <CharacterCue cue={character.cue} onDone={character.done} />
     </GameScreen>
   )
 }

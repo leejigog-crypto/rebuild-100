@@ -3,7 +3,9 @@ import { BudgetHud } from '../components/BudgetHud'
 import { GameScreen } from '../components/GameScreen'
 import { DoubleChevron } from '../components/Icons'
 import { ArrowLink, StageBar } from '../components/StageBar'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CharacterCue } from '../components/CharacterCue'
+import { useCharacterCue } from '../hooks/useCharacterCue'
 import { riskColors, sites, type SiteId } from '../data/game'
 import { loadHouseName, loadSite, saveSite } from '../data/progress'
 import { photoStyle } from '../data/images'
@@ -11,14 +13,31 @@ import './SitePage.css'
 
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
 
+/** 부지를 고를 때 캐릭터가 하는 말 */
+const siteLines: Record<SiteId, string> = {
+  core: '도시 한복판! 어디든 가깝겠어요.',
+  edge: '언덕 위 도시 전망, 멋져요!',
+  suburb: '마당이 넓어서 좋아요!',
+  sea: '바다가 보이는 집이라니!',
+  mountain: '숲속 공기가 벌써 상쾌해요!',
+  lake: '호수 앞이라 너무 평화로워요!',
+}
+
 export function SitePage() {
   const [siteId, setSiteId] = useState<SiteId>(loadSite)
   const [houseName] = useState(loadHouseName)
+  const character = useCharacterCue()
+  const { show, showLater } = character
   const selected = sites.find((s) => s.id === siteId) ?? sites[0]
   const pick = (id: SiteId) => {
     setSiteId(id)
     saveSite(id)
+    show('happy', siteLines[id])
   }
+
+  useEffect(() => {
+    showLater(900, 'happy', '새 집 지을 땅을 고르러 가요!')
+  }, [showLater])
   const afterPurchase = 100 - selected.cost
 
   return (
@@ -123,6 +142,8 @@ export function SitePage() {
           다음
         </ArrowLink>
       </StageBar>
+
+      <CharacterCue cue={character.cue} onDone={character.done} />
     </GameScreen>
   )
 }

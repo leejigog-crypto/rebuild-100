@@ -4,14 +4,12 @@
  */
 import type { BuildResult } from './buildResult'
 import { sites, specOrder, type Grade } from './game'
-import type { PhotoKey } from './images'
 import { resolveSpec, type Spec } from './progress'
 
 const structScore: Record<string, number> = { s1: 62, s2: 78, s3: 96, s4: 99 }
 const planScore: Record<string, number> = { p1: 64, p2: 78, p3: 91, p4: 97 }
 const lookScore: Record<string, number> = { l1: 74, l2: 86, l3: 93, l4: 96 }
 const extraBonus: Record<string, number> = { e1: 0, e2: 2, e3: 4, e4: 5 }
-const lookPhoto: Record<string, PhotoKey> = { l1: 'suburb', l2: 'lake', l3: 'forest', l4: 'city' }
 
 const clamp = (v: number, lo = 0, hi = 99) => Math.max(lo, Math.min(hi, Math.round(v)))
 
@@ -47,8 +45,7 @@ export function computeResult(spec: Spec, build: BuildResult | null) {
     siteName: options.site.name,
     lookName: options.look.name,
     sitePhoto: site.photo,
-    housePhoto: hasPool ? ('city' as PhotoKey) : (lookPhoto[spec.look] ?? 'lake'),
-    photoAlt: `완공된 집: ${options.look.name}${hasPool ? ', 수영장 포함' : ''}, ${options.struct.name}`,
+    photoAlt: `완공된 집 사진 (${grade}등급): ${options.look.name}${hasPool ? ', 수영장 포함' : ''}`,
     specs: specOrder.map((k) => ({ label: options[k].name.replace(/^\+ /, ''), grade: options[k].grade as Grade })),
     scores,
     total,

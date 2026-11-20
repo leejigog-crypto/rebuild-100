@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CharacterCue } from '../components/CharacterCue'
+import { useCharacterCue } from '../hooks/useCharacterCue'
 import { useNavigate } from 'react-router-dom'
 import { loadProfile, saveProfile, type Profile } from '../data/progress'
 import { DoubleChevron } from '../components/Icons'
@@ -10,6 +12,13 @@ import './IntroPage.css'
 
 export function IntroPage() {
   const navigate = useNavigate()
+  const character = useCharacterCue()
+  const { showLater } = character
+
+  // 지진 흔들림(약 1.9초)이 끝난 뒤 슬픈 표정으로 등장
+  useEffect(() => {
+    showLater(2000, 'sad', '우리 집이… 다 무너졌어요.')
+  }, [showLater])
   const [profile, setProfile] = useState<Profile>(loadProfile)
   const ready = profile.player.trim().length > 0 && profile.house.trim().length > 0
   const update = (patch: Partial<Profile>) => {
@@ -107,6 +116,8 @@ export function IntroPage() {
           <ArrowLink to="/site">건너뛰기</ArrowLink>
         </div>
       </main>
+
+      <CharacterCue cue={character.cue} onDone={character.done} />
     </div>
   )
 }
