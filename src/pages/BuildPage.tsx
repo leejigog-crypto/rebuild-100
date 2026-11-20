@@ -116,7 +116,7 @@ function reducer(s: State, a: Action): State {
         return {
           ...s,
           progress,
-          ...addLog(s, { title: '준공 완료', choice: '재난 테스트를 시작할 수 있어요', effect: '✓', tone: 'good' }),
+          ...addLog(s, { title: '준공 완료', choice: '준공결과를 확인할 수 있어요', effect: '✓', tone: 'good' }),
           ...(s.budget < 0 ? withCue(s, 'sad', '다 지었는데… 예산이 넘었어요.') : withCue(s, 'happy', '준공 완료! 해냈다!')),
         }
       }
@@ -352,7 +352,7 @@ export function BuildPage() {
         {done ? (
           <>
             <Link to="/result" className="btn btn--primary" style={{ fontSize: 22 }}>
-              재난 테스트 시작 <DoubleChevron />
+              준공결과 확인 <DoubleChevron />
             </Link>
             <button type="button" className="build__restart" onClick={() => dispatch({ type: 'restart' })}>
               처음부터 다시 보기
@@ -360,7 +360,7 @@ export function BuildPage() {
           </>
         ) : (
           <button type="button" className="btn btn--sm btn--disabled-dark" disabled style={{ fontSize: 20 }}>
-            재난 테스트 시작 · 준공 후
+            준공결과 확인 · 준공 후
           </button>
         )}
       </StageBar>
